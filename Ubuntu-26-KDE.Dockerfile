@@ -83,13 +83,12 @@ RUN apt-get update && \
         cp /tmp/anland/producers/kde/ubuntu2604/startup.sh /opt/anland/ && \
         chmod +x /opt/anland/build.sh /opt/anland/startup.sh && \
         echo "--> [开启] 正在重新编译安装 patched kwin 和 xwayland..." && \
-        cd /opt/anland && ./build.sh > /tmp/anland-build.log 2>&1 || { echo "--> [错误] anland_kde 编译失败，查看日志:"; tail -50 /tmp/anland-build.log; exit 1; } && \
-        echo "--> [开启] anland_kde 编译成功" && \
+        cd /opt/anland && ./build.sh && \
         echo "--> [开启] 正在安装 anland 启动脚本..." && \
         cp /opt/anland/startup.sh /usr/local/bin/startanland-kde.sh && \
         chmod +x /usr/local/bin/startanland-kde.sh && \
         echo "--> [开启] 清理 anland 临时文件..." && \
-        rm -rf /tmp/anland /tmp/anland-build.log && \
+        rm -rf /tmp/anland && \
         echo "--> [开启] anland_kde 支持已安装"; \
     fi && \
     ######################################################################################################

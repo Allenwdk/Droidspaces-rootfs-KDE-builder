@@ -183,6 +183,14 @@ jobs:
           path: "*.tar.xz"
           retention-days: 1
 
+      - name: 上传构建日志
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.template }}-build-log
+          path: "*.log"
+          retention-days: 3
+
   # --------------------------------------------------------
   # 阶段 3: release (汇总发布)
   # --------------------------------------------------------

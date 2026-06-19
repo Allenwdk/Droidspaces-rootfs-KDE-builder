@@ -78,9 +78,6 @@ FINAL_NAME="${PREFIX}-Droidspaces-rootfs-${ARCH}-${DATE}-${VERSION}.tar.xz"
 
 echo "正在运行 Docker Build (原生模式)..."
 
-
-
-
 docker buildx build \
   --target export \
   --output type=tar,dest="$TEMP_TAR" \
@@ -99,7 +96,7 @@ docker buildx build \
   --build-arg ENABLE_anland_kde_ARG="$ENABLE_anland_kde" \
   --build-arg USERNAME="$USERNAME" \
   -f "$DOCKERFILE" \
-  .
+  . 2>&1 | tee "build-${PREFIX}.log"
 
 
 
