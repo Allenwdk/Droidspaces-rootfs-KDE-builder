@@ -77,9 +77,9 @@ RUN apt-get update && \
         git clone --depth=1 https://github.com/superturtlee/anland.git /tmp/anland && \
         echo "--> [开启] 正在复制 anland 补丁文件..." && \
         mkdir -p /opt/anland && \
-        cp /tmp/anland/kdefix/build.sh /opt/anland/ && \
-        cp /tmp/anland/kdefix/kwin.patch /opt/anland/ && \
-        cp /tmp/anland/kdefix/xwayland.patch /opt/anland/ && \
+        cp /tmp/anland/producers/kde/ubuntu2604/build.sh /opt/anland/ && \
+        cp /tmp/anland/producers/kde/ubuntu2604/kwin.patch /opt/anland/ && \
+        cp /tmp/anland/producers/kde/ubuntu2604/xwayland.patch /opt/anland/ && \
         chmod +x /opt/anland/build.sh && \
         echo "--> [开启] 正在重新编译安装 patched kwin 和 xwayland..." && \
         cd /opt/anland && ./build.sh && \
