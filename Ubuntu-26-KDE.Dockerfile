@@ -75,16 +75,17 @@ RUN apt-get update && \
         build-essential devscripts debhelper patch ca-certificates git && \
         echo "--> [开启] 正在克隆 anland 项目..." && \
         git clone --depth=1 https://github.com/superturtlee/anland.git /tmp/anland && \
-        echo "--> [开启] 正在复制 anland 补丁文件..." && \
+        echo "--> [开启] 正在复制 anland 文件..." && \
         mkdir -p /opt/anland && \
         cp /tmp/anland/producers/kde/ubuntu2604/build.sh /opt/anland/ && \
         cp /tmp/anland/producers/kde/ubuntu2604/kwin.patch /opt/anland/ && \
         cp /tmp/anland/producers/kde/ubuntu2604/xwayland.patch /opt/anland/ && \
-        chmod +x /opt/anland/build.sh && \
+        cp /tmp/anland/producers/kde/ubuntu2604/startup.sh /opt/anland/ && \
+        chmod +x /opt/anland/build.sh /opt/anland/startup.sh && \
         echo "--> [开启] 正在重新编译安装 patched kwin 和 xwayland..." && \
         cd /opt/anland && ./build.sh && \
         echo "--> [开启] 正在安装 anland 启动脚本..." && \
-        cp /tmp/anland/producers/kde/ubuntu2604/startup.sh /usr/local/bin/startanland-kde.sh && \
+        cp /opt/anland/startup.sh /usr/local/bin/startanland-kde.sh && \
         chmod +x /usr/local/bin/startanland-kde.sh && \
         echo "--> [开启] 清理 anland 临时文件..." && \
         rm -rf /tmp/anland && \
