@@ -14,6 +14,7 @@ ARG ENABLE_zip_ARG
 ARG ENABLE_docker_ARG
 ARG ENABLE_srf_ARG
 ARG ENABLE_tmoe_ARG
+ARG ENABLE_anland_kde_ARG
 ARG USERNAME
 ######################################################
 
@@ -65,6 +66,29 @@ RUN apt-get update && \
         kfind plasma-systemmonitor filelight glmark2 vkmark systemsettings kde-config-screenlocker kio-extras xdg-user-dirs dolphin-plugins ffmpegthumbs kdegraphics-thumbnailers \
         kimageformat6-plugins plasma-browser-integration libcanberra-pulse gstreamer1.0-plugins-base gstreamer1.0-plugins-good sound-theme-freedesktop \
         polkit-kde-agent-1 libpam-systemd libpam-modules libpam-kwallet5 plasma-session-x11 language-pack-kde-zh-hans language-pack-zh-hans qt6-translations-l10n; \
+    fi && \
+    ######################################################################################################
+    ############################################## anland_kde 支持 ################################################
+    if [ "$ENABLE_anland_kde_ARG" = "true" ] && ([ "$BUILD_KDE" = "min" ] || [ "$BUILD_KDE" = "conc" ]); then \
+        echo "--> [开启] 正在安装 anland_kde 构建依赖..." && \
+        apt-get install -y --no-install-recommends \
+        build-essential devscripts debhelper patch ca-certificates git && \
+        echo "--> [开启] 正在克隆 anland 项目..." && \
+        git clone --depth=1 https://github.com/superturtlee/anland.git /tmp/anland && \
+        echo "--> [开启] 正在复制 anland 补丁文件..." && \
+        mkdir -p /opt/anland && \
+        cp /tmp/anland/kdefix/build.sh /opt/anland/ && \
+        cp /tmp/anland/kdefix/kwin.patch /opt/anland/ && \
+        cp /tmp/anland/kdefix/xwayland.patch /opt/anland/ && \
+        chmod +x /opt/anland/build.sh && \
+        echo "--> [开启] 正在重新编译安装 patched kwin 和 xwayland..." && \
+        cd /opt/anland && ./build.sh && \
+        echo "--> [开启] 正在安装 anland 启动脚本..." && \
+        cp /tmp/anland/producers/kde/ubuntu2604/startup.sh /usr/local/bin/startanland-kde.sh && \
+        chmod +x /usr/local/bin/startanland-kde.sh && \
+        echo "--> [开启] 清理 anland 临时文件..." && \
+        rm -rf /tmp/anland && \
+        echo "--> [开启] anland_kde 支持已安装"; \
     fi && \
     ######################################################################################################
     #输入法 fcitx5 (可选)

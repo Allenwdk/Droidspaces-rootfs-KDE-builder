@@ -89,6 +89,11 @@ on:
         required: true
         type: boolean
         default: false    
+      enable_anland_kde:
+        description: 'anland_kde support (Requires KDE desktop to be enabled)'
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   # --------------------------------------------------------
@@ -168,6 +173,7 @@ jobs:
             -f "${{ inputs.enable_docker }}" \
             -h "${{ inputs.enable_srf }}" \
             -j "${{ inputs.enable_tmoe }}" \
+            -A "${{ inputs.enable_anland_kde }}" \
             -u "${{ inputs.custom_username }}"
 
       - name: Upload build artifacts
