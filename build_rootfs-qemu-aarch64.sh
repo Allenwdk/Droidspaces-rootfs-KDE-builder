@@ -99,7 +99,7 @@ docker buildx build \
   --build-arg ENABLE_anland_kde_ARG="$ENABLE_anland_kde" \
   --build-arg USERNAME="$USERNAME" \
   -f "$DOCKERFILE" \
-  .
+  . 2>&1 | tee "build-${PREFIX}.log"
 
 echo "正在压缩构建产物 (使用 xz 最高压缩率 - 开启多线程加速)..."
 xz -T0 -9 -f "$TEMP_TAR"
