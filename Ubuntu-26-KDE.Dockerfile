@@ -87,8 +87,8 @@ RUN apt-get update && \
         echo "--> [开启] 正在安装 anland 启动脚本..." && \
         cp /opt/anland/startup.sh /usr/local/bin/startanland-kde.sh && \
         chmod +x /usr/local/bin/startanland-kde.sh && \
-        echo "--> [开启] 清理 anland 临时文件..." && \
-        rm -rf /tmp/anland && \
+        echo "--> [开启] 清理 anland 编译残留..." && \
+        rm -rf /tmp/anland /root/anland-debbuild && \
         echo "--> [开启] anland_kde 支持已安装"; \
     fi && \
     ######################################################################################################
@@ -119,6 +119,10 @@ RUN apt-get update && \
         git clone --depth=1 https://github.com/2moe/tmoe-linux.git /usr/local/etc/tmoe-linux/git && \
         ln -sf /usr/local/etc/tmoe-linux/git/debian.sh /usr/local/bin/tmoe && \
         chmod -R 755 /usr/local/etc/tmoe-linux; \
+    fi && \
+    ## 清理 anland 构建工具（如果开发工具未开启）
+    if [ "$ENABLE_anland_kde_ARG" = "true" ] && [ "$ENABLE_kfgj_ARG" != "true" ]; then \
+        apt-get purge -y git build-essential devscripts debhelper patch || true; \
     fi && \
     apt-get autoremove -y && \
     apt-get clean && \
