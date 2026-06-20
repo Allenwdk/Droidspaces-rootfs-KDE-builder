@@ -101,8 +101,8 @@ docker buildx build \
   -f "$DOCKERFILE" \
   .
 
-echo "正在压缩构建产物 (使用 xz 最高压缩率 - 开启多线程加速)..."
-xz -T0 -9 -f "$TEMP_TAR"
+echo "正在压缩构建产物 (使用 xz 默认压缩率 - 开启多线程加速)..."
+xz -T0 -6 -f "$TEMP_TAR"
 
 echo "正在重命名最终文件: $FINAL_NAME"
 mv "${TEMP_TAR}.xz" "$FINAL_NAME"
