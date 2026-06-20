@@ -14,6 +14,7 @@ ARG ENABLE_zip_ARG
 ARG ENABLE_docker_ARG
 ARG ENABLE_srf_ARG
 ARG ENABLE_tmoe_ARG
+ARG ENABLE_anland_kde_ARG
 ARG USERNAME
 ######################################################
 
@@ -65,6 +66,26 @@ RUN apt-get update && \
         kfind plasma-systemmonitor filelight glmark2 vkmark systemsettings kde-config-screenlocker kio-extras xdg-user-dirs dolphin-plugins ffmpegthumbs kdegraphics-thumbnailers \
         kimageformat6-plugins plasma-browser-integration libcanberra-pulse gstreamer1.0-plugins-base gstreamer1.0-plugins-good sound-theme-freedesktop \
         polkit-kde-agent-1 libpam-systemd libpam-modules libpam-kwallet5 plasma-session-x11 language-pack-kde-zh-hans language-pack-zh-hans qt6-translations-l10n; \
+    fi && \
+    ######################################################################################################
+    ############################################## anland_kde 支持 ################################################
+    if [ "$ENABLE_anland_kde_ARG" = "true" ] && ([ "$BUILD_KDE" = "min" ] || [ "$BUILD_KDE" = "conc" ]); then \
+        echo "--> [开启] 正在安装 anland_kde..." && \
+        apt-get install -y --no-install-recommends git ca-certificates && \
+        git clone --depth=1 https://github.com/Allenwdk/Droidspaces-rootfs-KDE-builder.git /tmp/builder && \
+        echo "--> [开启] 正在安装预编译的 kwin deb 包..." && \
+        dpkg -i /tmp/builder/anland-debbuild/ubuntu2604/kwin/*.deb || apt-get install -f -y && \
+        echo "--> [开启] 正在安装预编译的 xwayland deb 包..." && \
+        dpkg -i /tmp/builder/anland-debbuild/ubuntu2604/xwayland/*.deb || apt-get install -f -y && \
+        echo "--> [开启] 正在安装 anland 启动脚本..." && \
+        mkdir -p /opt/anland && \
+        git clone --depth=1 https://github.com/superturtlee/anland.git /tmp/anland && \
+        cp /tmp/anland/producers/kde/ubuntu2604/startup.sh /opt/anland/ && \
+        cp /opt/anland/startup.sh /usr/local/bin/startanland-kde.sh && \
+        chmod +x /usr/local/bin/startanland-kde.sh && \
+        echo "--> [开启] 清理临时文件..." && \
+        rm -rf /tmp/builder /tmp/anland && \
+        echo "--> [开启] anland_kde 支持已安装"; \
     fi && \
     ######################################################################################################
     #输入法 fcitx5 (可选)
@@ -180,6 +201,24 @@ EOF
     fi
     chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
     if [ "$BUILD_KDE_plus" = "true" ] ; then
+    if [ "$ENABLE_anland_kde_ARG" = "true" ]; then
+    cat <<EOF > /etc/systemd/system/plasma-anland.service
+[Unit]
+Description=Start Plasma anland
+After=network.target display-manager.service
+
+[Service]
+Type=simple
+User=${USERNAME}
+EnvironmentFile=-/etc/environment
+ExecStart=/bin/bash -lc '/usr/local/bin/startanland-kde.sh'
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    ln -sf /etc/systemd/system/plasma-anland.service /etc/systemd/system/multi-user.target.wants/plasma-anland.service
+    else
     cat <<EOF > /etc/systemd/system/plasma-x11.service
 [Unit]
 Description=Start Plasma X11
@@ -198,20 +237,27 @@ EOF
     mkdir -p /etc/systemd/system/multi-user.target.wants
     ln -sf /etc/systemd/system/plasma-x11.service /etc/systemd/system/multi-user.target.wants/plasma-x11.service
     fi
+    fi
 EOF_RUN
 
 # Mesa 驱动适配
 RUN if [ "$ENABLE_mesa_ARG" = "true" ]; then \
-        echo "--> [开启] 正在下载并安装最新版 Mesa 驱动..." && \
-        URL=$(curl -s https://api.github.com/repos/lfdevs/mesa-for-android-container/releases/latest | \
-        jq -r '.assets[] | select(.name | test("mesa-for-android-container_.*_ubuntu_resolute_arm64\\.tar\\.gz")) | .browser_download_url' | head -1) && \
-        if [ -z "$URL" ] || [ "$URL" = "null" ]; then echo "获取下载链接失败，可能是源仓库还没有提供 Ubuntu 版本的 Mesa 驱动或触发了限制"; exit 1; fi && \
+        if [ "$ENABLE_anland_kde_ARG" = "true" ]; then \
+            echo "--> [开启] 正在下载 anland 版本 Mesa 驱动..." && \
+            URL=$(curl -s "https://api.github.com/repos/superturtlee/mesa-for-android-container/releases/tags/anland" | \
+            jq -r '.assets[] | select(.name | test("mesa-for-android-container_.*_ubuntu_resolute_arm64\\.tar\\.gz")) | .browser_download_url' | head -1) ; \
+        else \
+            echo "--> [开启] 正在下载并安装最新版 Mesa 驱动..." && \
+            URL=$(curl -s "https://api.github.com/repos/lfdevs/mesa-for-android-container/releases/latest" | \
+            jq -r '.assets[] | select(.name | test("mesa-for-android-container_.*_ubuntu_resolute_arm64\\.tar\\.gz")) | .browser_download_url' | head -1) ; \
+        fi && \
+        if [ -z "$URL" ] || [ "$URL" = "null" ]; then echo "获取下载链接失败"; exit 1; fi && \
         wget -q --tries=5 --waitretry=3 -O /tmp/mesa.tar.gz "$URL" && \
         tar -zxf /tmp/mesa.tar.gz -C / && \
         rm /tmp/mesa.tar.gz && \
-        ldconfig; \
+        ldconfig ; \
     else \
-        echo "--> [跳过] 未开启 Mesa 驱动安装"; \
+        echo "--> [跳过] 未开启 Mesa 驱动安装" ; \
     fi
 
 # 修复容器内的 DHCP 网络服务配置
@@ -359,7 +405,7 @@ RUN if [ "$ENABLE_binfmt_ARG" = "true" ]; then \
         apt-get autoclean && \
         rm -rf /var/lib/binfmts/* /etc/binfmt.d/* /usr/lib/binfmt.d/qemu-* && \
         dpkg --add-architecture amd64 && \
-        sed -i '/^Types: deb$/a Architectures: arm64' /etc/apt/sources.list.d/ubuntu.sources && \
+        sed -i '/^Types: deb/a Architectures: arm64' /etc/apt/sources.list.d/ubuntu.sources && \
         printf "Types: deb\nURIs: http://archive.ubuntu.com/ubuntu/\nSuites: resolute resolute-updates resolute-security\nComponents: main universe restricted multiverse\nArchitectures: amd64\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n" > /etc/apt/sources.list.d/ubuntu-amd64.sources && \
         apt-get update && \
         (apt-get install -y --no-install-recommends qemu-user-binfmt libc6:amd64 libc6:arm64 libc-bin || \
