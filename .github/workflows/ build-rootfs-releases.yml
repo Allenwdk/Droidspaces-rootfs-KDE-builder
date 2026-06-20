@@ -35,6 +35,11 @@ on:
         required: true
         type: boolean
         default: false
+      enable_anland_kde:
+        description: 'anland_kde 支持（目前仅支持Ubuntu26，需要同时启用 KDE 桌面开机自启动）'
+        required: true
+        type: boolean
+        default: false
       PulseAudio:
         description: 'PulseAudio 音频转发'
         required: true
@@ -89,11 +94,6 @@ on:
         required: true
         type: boolean
         default: false    
-      enable_anland_kde:
-        description: 'anland_kde 支持 (需要同时启用 KDE 桌面)'
-        required: true
-        type: boolean
-        default: false
 
 jobs:
   # --------------------------------------------------------

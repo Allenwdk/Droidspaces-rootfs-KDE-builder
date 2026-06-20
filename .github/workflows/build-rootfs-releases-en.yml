@@ -35,6 +35,11 @@ on:
         required: true
         type: boolean
         default: false
+      enable_anland_kde:
+        description: 'anland_kde support (Ubuntu 26 only, requires KDE desktop auto-start)'
+        required: true
+        type: boolean
+        default: false
       PulseAudio:
         description: 'PulseAudio audio forwarding'
         required: true
@@ -89,11 +94,6 @@ on:
         required: true
         type: boolean
         default: false    
-      enable_anland_kde:
-        description: 'anland_kde support (Requires KDE desktop to be enabled)'
-        required: true
-        type: boolean
-        default: false
 
 jobs:
   # --------------------------------------------------------
