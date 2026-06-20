@@ -72,18 +72,19 @@ RUN apt-get update && \
     if [ "$ENABLE_anland_kde_ARG" = "true" ] && ([ "$BUILD_KDE" = "min" ] || [ "$BUILD_KDE" = "conc" ]); then \
         echo "--> [开启] 正在安装 anland_kde..." && \
         apt-get install -y --no-install-recommends git ca-certificates && \
-        git clone --depth=1 https://github.com/superturtlee/anland.git /tmp/anland && \
+        git clone --depth=1 https://github.com/Allenwdk/Droidspaces-rootfs-KDE-builder.git /tmp/builder && \
         echo "--> [开启] 正在安装预编译的 kwin deb 包..." && \
-        dpkg -i /tmp/anland/anland-debbuild/kwin/*.deb || apt-get install -f -y && \
+        dpkg -i /tmp/builder/anland-debbuild/kwin/*.deb || apt-get install -f -y && \
         echo "--> [开启] 正在安装预编译的 xwayland deb 包..." && \
-        dpkg -i /tmp/anland/anland-debbuild/xwayland/*.deb || apt-get install -f -y && \
+        dpkg -i /tmp/builder/anland-debbuild/xwayland/*.deb || apt-get install -f -y && \
         echo "--> [开启] 正在安装 anland 启动脚本..." && \
         mkdir -p /opt/anland && \
+        git clone --depth=1 https://github.com/superturtlee/anland.git /tmp/anland && \
         cp /tmp/anland/producers/kde/ubuntu2604/startup.sh /opt/anland/ && \
         cp /opt/anland/startup.sh /usr/local/bin/startanland-kde.sh && \
         chmod +x /usr/local/bin/startanland-kde.sh && \
         echo "--> [开启] 清理临时文件..." && \
-        rm -rf /tmp/anland && \
+        rm -rf /tmp/builder /tmp/anland && \
         echo "--> [开启] anland_kde 支持已安装"; \
     fi && \
     ######################################################################################################
