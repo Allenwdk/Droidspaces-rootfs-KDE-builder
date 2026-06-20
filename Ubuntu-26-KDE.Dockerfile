@@ -72,23 +72,34 @@ RUN apt-get update && \
     if [ "$ENABLE_anland_kde_ARG" = "true" ] && ([ "$BUILD_KDE" = "min" ] || [ "$BUILD_KDE" = "conc" ]); then \
         echo "--> [开启] 正在安装 anland_kde 构建依赖..." && \
         apt-get install -y --no-install-recommends \
-        build-essential devscripts debhelper patch ca-certificates git && \
-        echo "--> [开启] 正在克隆 anland 项目..." && \
-        git clone --depth=1 https://github.com/superturtlee/anland.git /tmp/anland && \
-        echo "--> [开启] 正在复制 anland 文件..." && \
-        mkdir -p /opt/anland && \
-        cp /tmp/anland/producers/kde/ubuntu2604/build.sh /opt/anland/ && \
-        cp /tmp/anland/producers/kde/ubuntu2604/kwin.patch /opt/anland/ && \
-        cp /tmp/anland/producers/kde/ubuntu2604/xwayland.patch /opt/anland/ && \
-        cp /tmp/anland/producers/kde/ubuntu2604/startup.sh /opt/anland/ && \
-        chmod +x /opt/anland/build.sh /opt/anland/startup.sh && \
-        echo "--> [开启] 正在重新编译安装 patched kwin 和 xwayland..." && \
-        cd /opt/anland && ./build.sh && \
+        git wget ca-certificates && \
+        echo "--> [开启] 正在下载预编译的 anland kwin 和 xwayland..." && \
+        mkdir -p /tmp/anland-debs && \
+        ANLAND_DEBS_URL=$(curl -s "https://api.github.com/repos/superturtlee/anland/releases/tags/ubuntu2604" | \
+        jq -r '.assets[] | .browser_download_url') && \
+        if [ -z "$ANLAND_DEBS_URL" ] || [ "$ANLAND_DEBS_URL" = "null" ]; then \
+            echo "--> [警告] 未找到预编译 deb 包，尝试从源码编译..."; \
+            git clone --depth=1 https://github.com/superturtlee/anland.git /tmp/anland && \
+            mkdir -p /opt/anland && \
+            cp /tmp/anland/producers/kde/ubuntu2604/* /opt/anland/ && \
+            chmod +x /opt/anland/build.sh && \
+            cd /opt/anland && ./build.sh && \
+            rm -rf /tmp/anland; \
+        else \
+            for url in $ANLAND_DEBS_URL; do \
+                wget -q --tries=5 -O /tmp/anland-debs/$(basename "$url") "$url"; \
+            done && \
+            echo "--> [开启] 正在安装预编译的 deb 包..." && \
+            dpkg -i /tmp/anland-debs/*.deb || apt-get install -f -y; \
+        fi && \
         echo "--> [开启] 正在安装 anland 启动脚本..." && \
+        mkdir -p /opt/anland && \
+        git clone --depth=1 https://github.com/superturtlee/anland.git /tmp/anland-startup && \
+        cp /tmp/anland-startup/producers/kde/ubuntu2604/startup.sh /opt/anland/ && \
         cp /opt/anland/startup.sh /usr/local/bin/startanland-kde.sh && \
         chmod +x /usr/local/bin/startanland-kde.sh && \
-        echo "--> [开启] 清理 anland 编译残留..." && \
-        rm -rf /tmp/anland /root/anland-debbuild && \
+        echo "--> [开启] 清理 anland 临时文件..." && \
+        rm -rf /tmp/anland /tmp/anland-debs /tmp/anland-startup /root/anland-debbuild && \
         echo "--> [开启] anland_kde 支持已安装"; \
     fi && \
     ######################################################################################################
@@ -119,10 +130,6 @@ RUN apt-get update && \
         git clone --depth=1 https://github.com/2moe/tmoe-linux.git /usr/local/etc/tmoe-linux/git && \
         ln -sf /usr/local/etc/tmoe-linux/git/debian.sh /usr/local/bin/tmoe && \
         chmod -R 755 /usr/local/etc/tmoe-linux; \
-    fi && \
-    ## 清理 anland 构建工具（如果开发工具未开启）
-    if [ "$ENABLE_anland_kde_ARG" = "true" ] && [ "$ENABLE_kfgj_ARG" != "true" ]; then \
-        apt-get purge -y git build-essential devscripts debhelper patch || true; \
     fi && \
     apt-get autoremove -y && \
     apt-get clean && \
